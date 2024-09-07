@@ -7,8 +7,8 @@ export const register = (firstName, lastName, email, password, role = 'user') =>
   };  
   
 
-export const login = (username, password) => {
-  return axios.post(API_URL + 'login', { username, password });
+export const login = (email, password) => {
+  return axios.post(API_URL + 'login', { email, password });
 };
 
 export const getUser = () => {
@@ -18,3 +18,6 @@ export const getUser = () => {
 export const logout = () => {
   localStorage.removeItem('user');
 };
+export const getUsers = () => {
+    return axios.get(API_URL + 'users');
+  };

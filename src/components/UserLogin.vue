@@ -101,37 +101,47 @@ export default defineComponent({
       },
     };
   },
-  methods: {
-    async login() {
-      try {
-        const response = await axios.post('http://localhost:5000/api/auth/login', {
-          username: this.email,
-          password: this.password,
-        });
+methods: {
+  async login() {
+    try {
+      // Envoyer la requête POST avec l'email et le mot de passe
+      const response = await axios.post('http://localhost:5000/api/auth/login', {
+        email: this.email, // Utiliser "email" ici pour correspondre au backend
+        password: this.password,
+      });
 
-        console.log('Login response:', response.data);
+      // Afficher la réponse pour déboguer
+      console.log('Login response:', response.data);
 
-        if (response.status === 200) {
-          const userRole = response.data.role;
-          console.log('User role from response:', userRole);
+      // Vérifier si la requête a été un succès
+      if (response.status === 200) {
+        const userRole = response.data.role; // Extraire le rôle de l'utilisateur depuis la réponse
+        console.log('User role from response:', userRole);
 
-          if (userRole === 'admin') {
-            this.$router.push({ name: 'Admindashboard' });
-          } else if (userRole === 'user') {
-            this.$router.push({ name: 'Userdashboard' });
-          } else {
-            alert('Invalid user role');
-          }
+        // Redirection en fonction du rôle de l'utilisateur
+        if (userRole === 'admin') {
+          this.$router.push({ name: 'Admindashboard' });
+        } else if (userRole === 'user') {
+          this.$router.push({ name: 'Userdashboard' });
+        } else {
+          alert('Invalid user role');
         }
-      } catch (error) {
-        console.error('There was an error!', error.response?.data || error);
+      } else {
         alert('Login failed. Please try again.');
       }
-    },
-    goToRegister() {
-      this.$router.push({ name: 'Register' });
-    },
+    } catch (error) {
+      // Afficher l'erreur en cas d'échec
+      console.error('There was an error!', error.response?.data || error);
+      alert('Login failed. Please try again.');
+    }
   },
+  
+  // Méthode pour rediriger vers la page d'enregistrement
+  goToRegister() {
+    this.$router.push({ name: 'Register' });
+  },
+},
+
 });
 </script>
 

@@ -1,11 +1,12 @@
 import { createApp } from 'vue';
 import App from './App.vue';
-import router from './router'; // Import your router configuration
-import vuetify from './plugins/vuetify'; // Import Vuetify
+import router from './router'; // Assurez-vous que le chemin est correct
+import vuetify from './plugins/vuetify'; // Assurez-vous que le chemin est correct
+import { loadFonts } from './plugins/webfontloader'; // Pour charger les polices d'icônes
 
-const app = createApp(App);
+loadFonts();
 
-app.use(router); // Use the router
-app.use(vuetify);
-
-app.mount('#app');
+createApp(App)
+  .use(router)
+  .use(vuetify)
+  .mount('#app');

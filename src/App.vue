@@ -1,13 +1,13 @@
 <template>
-  <router-view></router-view> <!-- Le composant MainLayout sera affiché ici -->
+  <v-app>
+    <router-view></router-view>
+  </v-app>
 </template>
 
 <script>
-import { defineComponent } from 'vue';
-
-export default defineComponent({
+export default {
   name: 'App',
-});
+};
 </script>
 
 <style>
