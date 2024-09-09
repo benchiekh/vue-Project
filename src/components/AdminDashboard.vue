@@ -1,38 +1,65 @@
 <template>
   <v-container>
-    <h1 class="text-center mb-4">Hello Admin</h1>
+    <v-row class="mb-4">
+      <v-col>
+        <v-card class="pa-4" elevation="2">
+          <v-card-title class="headline text-center">Hello : Admin</v-card-title>
+          <v-card-subtitle class="text-center">
+            <v-text-field
+              v-model="search"
+              append-icon="mdi-magnify"
+              label="Search"
+              single-line
+              hide-details
+            />
+          </v-card-subtitle>
+          <v-data-table
+            :headers="headers"
+            :items="filteredUsers"
+            item-key="id"
+            class="elevation-1"
+            :loading="loading"
+          >
+            <template v-slot:[`item.actions`]="{ item }">
+              <v-btn icon @click="openEditDialog(item)" class="mr-2" color="blue">
+                <v-icon>mdi-pencil</v-icon>
+              </v-btn>
+              <v-btn icon @click="confirmDeleteUser(item)" class="red--text">
+                <v-icon>mdi-delete</v-icon>
+              </v-btn>
+            </template>
+          </v-data-table>
+        </v-card>
+      </v-col>
+    </v-row>
 
-    <v-data-table
-      :headers="headers"
-      :items="users"
-      item-key="id"
-      class="elevation-1"
-      :loading="loading"
-      :search="search"
-    >
-      <!-- Table Rows with Actions -->
-      <template v-slot:[`item.actions`]="{ item }">
-        <v-btn
-          icon
-          @click="editUser(item)"
-          class="mr-2"
-        >
-          <v-icon>mdi-pencil</v-icon>
-        </v-btn>
-        <v-btn
-          icon
-          @click="confirmDeleteUser(item)"
-          class="red--text"
-        >
-          <v-icon>mdi-delete</v-icon>
-        </v-btn>
-      </template>
-    </v-data-table>
+    <!-- Dialog for Edit User -->
+    <v-dialog v-model="editDialog" max-width="500px">
+      <v-card>
+        <v-card-title class="headline">Edit User</v-card-title>
+        <v-card-text>
+          <v-text-field label="First Name" v-model="editedUser.firstName"></v-text-field>
+          <v-text-field label="Last Name" v-model="editedUser.lastName"></v-text-field>
+          <v-text-field label="Email" v-model="editedUser.email"></v-text-field>
+          <v-select
+            label="Role"
+            v-model="editedUser.role"
+            :items="['user', 'admin']"
+          ></v-select>
+        </v-card-text>
+        <v-card-actions>
+          <v-spacer></v-spacer>
+          <v-btn color="primary" @click="editUser">Save</v-btn>
+          <v-btn color="grey" @click="editDialog = false">Cancel</v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
 
     <!-- Dialog for Delete Confirmation -->
     <v-dialog
-      v-model:show="deleteDialog"
-      max-width="290"
+      v-model="deleteDialog"
+      max-width="400"
+      transition="dialog-transition"
     >
       <v-card>
         <v-card-title class="headline">Confirm Deletion</v-card-title>
@@ -48,8 +75,9 @@
     </v-dialog>
   </v-container>
 </template>
+
 <script>
-import { getUsers, deleteUser as deleteUserService } from '@/services/authService'; // Assurez-vous que le chemin est correct
+import { getUsers, deleteUserService, editUserService } from '@/services/authService';
 
 export default {
   name: 'AdminDashboard',
@@ -61,13 +89,30 @@ export default {
         { text: 'Last Name', value: 'lastName' },
         { text: 'Email', value: 'email' },
         { text: 'Role', value: 'role' },
-        { text: 'Actions', value: 'actions', sortable: false } // Ajouter la colonne Actions
+        { text: 'Actions', value: 'actions', sortable: false }
       ],
       search: '',
       loading: false,
       deleteDialog: false,
+      editDialog: false,
       userToDelete: null,
+      editedUser: {
+        firstName: '',
+        lastName: '',
+        email: '',
+        role: '',
+        id: null,
+      }
     };
+  },
+  computed: {
+    filteredUsers() {
+      return this.users.filter(user =>
+        user.firstName.toLowerCase().includes(this.search.toLowerCase()) ||
+        user.lastName.toLowerCase().includes(this.search.toLowerCase()) ||
+        user.email.toLowerCase().includes(this.search.toLowerCase())
+      );
+    }
   },
   async created() {
     this.loading = true;
@@ -81,9 +126,27 @@ export default {
     }
   },
   methods: {
-    editUser(user) {
-      // Rediriger vers une page d'édition ou ouvrir un formulaire d'édition
-      this.$router.push({ name: 'EditUser', params: { id: user.id } });
+    // Ouvrir la boîte de dialogue pour l'édition
+    openEditDialog(user) {
+      this.editedUser = { ...user, id: user._id };
+      this.editDialog = true;
+    },
+    async editUser() {
+      try {
+        const updatedData = {
+          firstName: this.editedUser.firstName,
+          lastName: this.editedUser.lastName,
+          email: this.editedUser.email,
+          role: this.editedUser.role,
+        };
+        await editUserService(this.editedUser.id, updatedData);
+        this.users = this.users.map(u => (u._id === this.editedUser.id ? { ...u, ...updatedData } : u));
+        this.editDialog = false;
+        alert('User updated successfully');
+      } catch (error) {
+        console.error('There was an error updating the user!', error);
+        alert('Failed to update user');
+      }
     },
     confirmDeleteUser(user) {
       this.userToDelete = user;
@@ -91,8 +154,8 @@ export default {
     },
     async deleteUser() {
       try {
-        await deleteUserService(this.userToDelete.id);
-        this.users = this.users.filter(user => user.id !== this.userToDelete.id);
+        await deleteUserService(this.userToDelete._id);
+        this.users = this.users.filter(user => user._id !== this.userToDelete._id);
         this.deleteDialog = false;
         alert('User deleted successfully');
       } catch (error) {
@@ -103,7 +166,11 @@ export default {
   }
 };
 </script>
+
 <style scoped>
+.v-card {
+  border-radius: 12px;
+}
 .v-data-table th, .v-data-table td {
   font-size: 16px;
 }
