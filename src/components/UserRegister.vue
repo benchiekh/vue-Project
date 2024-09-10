@@ -102,8 +102,9 @@
 </template>
 
 <script>
-import axios from 'axios';
+
 import { defineComponent } from 'vue';
+import { registerService } from '@/services/authService';
 
 export default defineComponent({
   name: 'UserRegister',
@@ -132,13 +133,12 @@ export default defineComponent({
           return;
         }
 
-        const response = await axios.post('http://localhost:5000/api/auth/register', {
-          firstName: this.firstName,
-          lastName: this.lastName,
-          email: this.email,  // Correct field for email
-          password: this.password,
-          role: 'user',
-        });
+        const response = await  registerService ( 
+           this.firstName,
+            this.lastName,
+            this.email,  
+           this.password,
+        );
 
         if (response.status === 200) {
           alert('Registration successful!');

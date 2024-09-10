@@ -85,9 +85,9 @@
 </template>
 
 <script>
-import axios from 'axios';
-import { defineComponent } from 'vue';
 
+import { defineComponent } from 'vue';
+import {login} from '@/services/authService'
 export default defineComponent({
   name: 'UserLogin',
   data() {
@@ -105,17 +105,17 @@ methods: {
   async login() {
     try {
       // Envoyer la requête POST avec l'email et le mot de passe
-      const response = await axios.post('http://localhost:5000/api/auth/login', {
-        email: this.email, // Utiliser "email" ici pour correspondre au backend
-        password: this.password,
-      });
+      const response = await login( 
+        this.email, 
+      this.password,
+      );
 
       // Afficher la réponse pour déboguer
       console.log('Login response:', response.data);
 
       // Vérifier si la requête a été un succès
       if (response.status === 200) {
-        const userRole = response.data.role; // Extraire le rôle de l'utilisateur depuis la réponse
+        const userRole = response.data.role; 
         console.log('User role from response:', userRole);
 
         // Redirection en fonction du rôle de l'utilisateur

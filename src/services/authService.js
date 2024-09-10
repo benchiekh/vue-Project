@@ -1,13 +1,13 @@
 import axios from 'axios';
 
-const API_URL = 'http://localhost:5000/api/auth/';
+const API_URL = 'http://localhost:5000/api/auth';
 
-export const register = (firstName, lastName, email, password, role = 'user') => {
-  return axios.post(API_URL + 'register', { firstName, lastName, email, password, role });
+export const registerService = (firstName, lastName, email, password, role = 'user') => {
+  return axios.post(API_URL + '/register', { firstName, lastName, email, password, role });
 };
 
 export const login = (email, password) => {
-  return axios.post(API_URL + 'login', { email, password });
+  return axios.post(API_URL + '/login', { email, password });
 };
 
 export const getUser = () => {
@@ -25,12 +25,14 @@ export const getUsers = () => {
 // Nouvelle fonction pour supprimer un utilisateur
 
 export const deleteUserService = async (id) => {
-    return axios.delete(`http://localhost:5000/api/auth/users/${id}`);
+    return axios.delete(`${API_URL}${id}`);
   };
 
 
   // edit user 
 
   export const editUserService = async (id, updatedData) => {
-    return axios.put(`http://localhost:5000/api/auth/users/${id}`, updatedData);
+    return axios.put(`${API_URL}${id}`, updatedData);
   };
+
+

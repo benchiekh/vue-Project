@@ -38,7 +38,7 @@ const routes = [
           },
           {
             path: '',
-            redirect: 'landingpage' // Redirection par défaut si aucune route spécifique n'est fournie
+            redirect: 'landingpage' 
           }
       ]
     }

@@ -3,7 +3,7 @@
     <v-row class="mb-4">
       <v-col>
         <v-card class="pa-4" elevation="2">
-          <v-card-title class="headline text-center">Hello : Admin</v-card-title>
+          <v-card-title class="headline text-center">Hello : {{ user.firstName }}</v-card-title>
           <v-card-subtitle class="text-center">
             <v-text-field
               v-model="search"
@@ -36,16 +36,11 @@
     <!-- Dialog for Edit User -->
     <v-dialog v-model="editDialog" max-width="500px">
       <v-card>
-        <v-card-title class="headline">Edit User</v-card-title>
+        <v-card-title class="headline">Edit Profile</v-card-title>
         <v-card-text>
           <v-text-field label="First Name" v-model="editedUser.firstName"></v-text-field>
           <v-text-field label="Last Name" v-model="editedUser.lastName"></v-text-field>
           <v-text-field label="Email" v-model="editedUser.email"></v-text-field>
-          <v-select
-            label="Role"
-            v-model="editedUser.role"
-            :items="['user', 'admin']"
-          ></v-select>
         </v-card-text>
         <v-card-actions>
           <v-spacer></v-spacer>
@@ -83,24 +78,22 @@ export default {
   name: 'AdminDashboard',
   data() {
     return {
+      user: { firstName: 'John', lastName: 'Doe', email: 'john@example.com' },
       users: [],
       headers: [
         { text: 'First Name', value: 'firstName' },
         { text: 'Last Name', value: 'lastName' },
         { text: 'Email', value: 'email' },
-        { text: 'Role', value: 'role' },
         { text: 'Actions', value: 'actions', sortable: false }
       ],
       search: '',
       loading: false,
       deleteDialog: false,
       editDialog: false,
-      userToDelete: null,
       editedUser: {
         firstName: '',
         lastName: '',
         email: '',
-        role: '',
         id: null,
       }
     };
@@ -126,7 +119,6 @@ export default {
     }
   },
   methods: {
-    // Ouvrir la boîte de dialogue pour l'édition
     openEditDialog(user) {
       this.editedUser = { ...user, id: user._id };
       this.editDialog = true;
@@ -137,15 +129,14 @@ export default {
           firstName: this.editedUser.firstName,
           lastName: this.editedUser.lastName,
           email: this.editedUser.email,
-          role: this.editedUser.role,
         };
         await editUserService(this.editedUser.id, updatedData);
         this.users = this.users.map(u => (u._id === this.editedUser.id ? { ...u, ...updatedData } : u));
         this.editDialog = false;
-        alert('User updated successfully');
+        alert('Profile updated successfully');
       } catch (error) {
-        console.error('There was an error updating the user!', error);
-        alert('Failed to update user');
+        console.error('There was an error updating the profile!', error);
+        alert('Failed to update profile');
       }
     },
     confirmDeleteUser(user) {
