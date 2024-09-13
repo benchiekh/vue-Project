@@ -132,7 +132,7 @@ export default {
       this.$router.push('/login'); // Redirection vers la page de connexion par exemple
     },
     openEditDialog(user) {
-      this.editedUser = { ...user, id: user._id };
+      this.editedUser = { ...user, id: user._id }; 
       this.editDialog = true;
     },
     async editUser() {

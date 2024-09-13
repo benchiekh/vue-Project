@@ -26,7 +26,7 @@
             :items="filteredProducts"
             item-key="id"
             class="elevation-1"
-            :loading="loading"
+            :loading="productStore.loading"
           >
             <template v-slot:[`item.actions`]="{ item }">
               <v-btn icon @click="openEditDialog(item)" class="mr-2" color="blue">
@@ -40,7 +40,7 @@
         </v-card>
       </v-col>
     </v-row>
-
+    
     <!-- Dialog for Add Product -->
     <v-dialog v-model="addDialog" max-width="500px">
       <v-card>
@@ -93,35 +93,18 @@
     </v-dialog>
   </v-container>
 </template>
-
 <script>
-import { getProducts, addProduct as addProductService, editProduct as editProductService, deleteProduct as deleteProductService } from '@/services/productService';
+import { useProductStore } from '@/stores/productStore';
 
 export default {
   name: 'UserDashboard',
   data() {
     return {
       user: { firstName: '' },
-      products: [],
-      newProduct: {
-        name: '',
-        description: '',
-        price: '',
-        quantity: ''
-      },
-      editedProduct: {
-        _id: null,
-        name: '',
-        description: '',
-        price: '',
-        quantity: ''
-      },
       search: '',
-      loading: false,
       addDialog: false,
       editDialog: false,
       deleteDialog: false,
-      selectedProduct: {},
       headers: [
         { text: 'Name', value: 'name' },
         { text: 'Description', value: 'description' },
@@ -133,92 +116,49 @@ export default {
   },
   computed: {
     filteredProducts() {
-      return this.products.filter(product =>
+      return this.productStore.products.filter(product =>
         product.name.toLowerCase().includes(this.search.toLowerCase()) ||
         product.description.toLowerCase().includes(this.search.toLowerCase())
       );
     }
   },
   async created() {
-    this.loading = true;
-    try {
-      const response = await getProducts();
-      this.products = response.data;
-    } catch (error) {
-      console.error('There was an error fetching products!', error);
-    } finally {
-      this.loading = false;
-    }
+    await this.productStore.fetchProducts();
   },
   methods: {
-    logout() {
-      // Logique de déconnexion ici
-      console.log('User logged out');
-      // Redirection ou nettoyage des données d'authentification
-      this.$router.push('/login'); // Redirection vers la page de connexion par exemple
-    },
     openAddDialog() {
       this.newProduct = { name: '', description: '', price: '', quantity: '' };
       this.addDialog = true;
     },
     async addProduct() {
-      try {
-        const response = await addProductService(this.newProduct);
-        this.products.push(response.data);
-        this.addDialog = false;
-        this.newProduct = { name: '', description: '', price: '', quantity: '' };
-        alert('Product added successfully');
-      } catch (error) {
-        console.error('There was an error adding the product!', error);
-        alert('Failed to add product');
-      }
+      await this.productStore.addProduct(this.newProduct);
+      this.addDialog = false;
+      this.newProduct = { name: '', description: '', price: '', quantity: '' };
     },
     openEditDialog(product) {
       this.editedProduct = { ...product };
-      console.log('Editing product:', this.editedProduct); // Vérifie que l'ID est présent
-      console.log('Editing product with ID:', this.editedProduct._id); // Assure-toi que l'ID est bien là
       this.editDialog = true;
     },
     async editProduct() {
-      try {
-        if (!this.editedProduct._id) {
-          throw new Error('Product ID is missing');
-        }
-        const updatedData = {
-          name: this.editedProduct.name,
-          description: this.editedProduct.description,
-          price: this.editedProduct.price,
-          quantity: this.editedProduct.quantity
-        };
-        await editProductService(this.editedProduct._id, updatedData);
-        this.products = this.products.map(p => (p._id === this.editedProduct._id ? { ...p, ...updatedData } : p));
-        this.editDialog = false;
-        alert('Product updated successfully');
-      } catch (error) {
-        console.error('There was an error updating the product!', error);
-        alert('Failed to update product');
-      }
+      await this.productStore.editProduct(this.editedProduct);
+      this.editDialog = false;
     },
     confirmDeleteProduct(product) {
       this.selectedProduct = product;
-      console.log('Selected product for deletion:', this.selectedProduct); // Vérifie que l'ID est présent
-      console.log('Selected product ID:', this.selectedProduct._id); // Assure-toi que l'ID est bien là
       this.deleteDialog = true;
     },
     async deleteProduct() {
-      try {
-        if (!this.selectedProduct._id) {
-          throw new Error('Product ID is missing');
-        }
-        await deleteProductService(this.selectedProduct._id);
-        this.products = this.products.filter(product => product._id !== this.selectedProduct._id);
-        this.deleteDialog = false;
-        alert('Product deleted successfully');
-      } catch (error) {
-        console.error('There was an error deleting the product!', error);
-        alert('Failed to delete product');
-      }
+      await this.productStore.deleteProduct(this.selectedProduct._id);
+      this.deleteDialog = false;
+    },
+    logout() {
+        console.log('User logged out');
+      this.$router.push('/login'); 
     }
+  },
+  setup() {
+    const productStore = useProductStore();
+    return { productStore };
   }
 };
 </script>
