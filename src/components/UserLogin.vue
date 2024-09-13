@@ -87,7 +87,7 @@
 <script>
 
 import { defineComponent } from 'vue';
-import {login} from '@/services/authService'
+import {loginSerive} from '@/services/authService'
 export default defineComponent({
   name: 'UserLogin',
   data() {
@@ -105,10 +105,13 @@ methods: {
   async login() {
     try {
       // Envoyer la requête POST avec l'email et le mot de passe
-      const response = await login( 
-        this.email, 
-      this.password,
-      );
+      const loginData = {
+       email :this.email, 
+     password : this.password,
+    } ;
+    
+    const response = await loginSerive(loginData);
+
 
       // Afficher la réponse pour déboguer
       console.log('Login response:', response.data);

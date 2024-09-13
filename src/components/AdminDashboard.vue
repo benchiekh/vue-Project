@@ -1,5 +1,11 @@
 <template>
   <v-container>
+    <v-toolbar flat>
+      <v-toolbar-title>User Dashboard</v-toolbar-title>
+      <v-spacer></v-spacer>
+      <v-btn @click="logout" color="red" text>Logout</v-btn>
+    </v-toolbar>
+    
     <v-row class="mb-4">
       <v-col>
         <v-card class="pa-4" elevation="2">
@@ -119,6 +125,12 @@ export default {
     }
   },
   methods: {
+    logout() {
+      // Logique de déconnexion ici
+      console.log('User logged out');
+      // Redirection ou nettoyage des données d'authentification
+      this.$router.push('/login'); // Redirection vers la page de connexion par exemple
+    },
     openEditDialog(user) {
       this.editedUser = { ...user, id: user._id };
       this.editDialog = true;
@@ -181,4 +193,4 @@ export default {
 .v-btn {
   min-width: 0;
 }
-</style>
+</style>    

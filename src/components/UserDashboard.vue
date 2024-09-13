@@ -1,21 +1,26 @@
 <template>
   <v-container>
+    <!-- Toolbar with Logout Button -->
+    <v-toolbar flat>
+      <v-toolbar-title>User Dashboard</v-toolbar-title>
+      <v-spacer></v-spacer>
+      <v-btn @click="logout" color="red" text>Logout</v-btn>
+    </v-toolbar>
+
     <v-row class="mb-4">
       <v-col>
         <v-card class="pa-4" elevation="2">
-          <v-card-title class="headline text-center">Product Dashboard</v-card-title>
+          <v-card-title class="headline text-center">Welcome : {{ user.firstName }}</v-card-title>
           <v-card-subtitle class="text-center">
             <v-text-field
               v-model="search"
               append-icon="mdi-magnify"
-              label="Search"
+              label="Search description"
               single-line
               hide-details
             />
+            <v-btn @click="openAddDialog" color="primary" class="mt-2">Add Product</v-btn>
           </v-card-subtitle>
-          <v-card-actions class="pa-2">
-            <v-btn color="primary" @click="openAddDialog">Add Product</v-btn>
-          </v-card-actions>
           <v-data-table
             :headers="headers"
             :items="filteredProducts"
@@ -23,43 +28,28 @@
             class="elevation-1"
             :loading="loading"
           >
-            <!-- Utilisation de scoped slots pour actions -->
-            <template #item="{ item }">
-              <v-data-table-row>
-                <v-data-table-cell>{{ item.name }}</v-data-table-cell>
-                <v-data-table-cell>{{ item.description }}</v-data-table-cell>
-                <v-data-table-cell>{{ item.price }}</v-data-table-cell>
-                <v-data-table-cell>{{ item.quantity }}</v-data-table-cell>
-                <v-data-table-cell>{{ item.category }}</v-data-table-cell>
-                <v-data-table-cell>
-                  <v-btn icon @click="editProduct(item)" color="blue">
-                    <v-icon>mdi-pencil</v-icon>
-                  </v-btn>
-                  <v-btn icon @click="confirmDeleteProduct(item)" class="red--text">
-                    <v-icon>mdi-delete</v-icon>
-                  </v-btn>
-                </v-data-table-cell>
-              </v-data-table-row>
+            <template v-slot:[`item.actions`]="{ item }">
+              <v-btn icon @click="openEditDialog(item)" class="mr-2" color="blue">
+                <v-icon>mdi-pencil</v-icon>
+              </v-btn>
+              <v-btn icon @click="confirmDeleteProduct(item)" class="red--text">
+                <v-icon>mdi-delete</v-icon>
+              </v-btn>
             </template>
           </v-data-table>
         </v-card>
       </v-col>
     </v-row>
 
-    <!-- Dialog for Adding Product -->
+    <!-- Dialog for Add Product -->
     <v-dialog v-model="addDialog" max-width="500px">
       <v-card>
         <v-card-title class="headline">Add Product</v-card-title>
         <v-card-text>
           <v-text-field label="Name" v-model="newProduct.name"></v-text-field>
           <v-text-field label="Description" v-model="newProduct.description"></v-text-field>
-          <v-text-field label="Price" type="number" v-model="newProduct.price"></v-text-field>
-          <v-text-field label="Quantity" type="number" v-model="newProduct.quantity"></v-text-field>
-          <v-select
-            label="Category"
-            v-model="newProduct.category"
-            :items="['Electronics', 'Clothing', 'Books', 'Other']"
-          ></v-select>
+          <v-text-field label="Price" v-model="newProduct.price" type="number"></v-text-field>
+          <v-text-field label="Quantity" v-model="newProduct.quantity" type="number"></v-text-field>
         </v-card-text>
         <v-card-actions>
           <v-spacer></v-spacer>
@@ -76,28 +66,19 @@
         <v-card-text>
           <v-text-field label="Name" v-model="editedProduct.name"></v-text-field>
           <v-text-field label="Description" v-model="editedProduct.description"></v-text-field>
-          <v-text-field label="Price" type="number" v-model="editedProduct.price"></v-text-field>
-          <v-text-field label="Quantity" type="number" v-model="editedProduct.quantity"></v-text-field>
-          <v-select
-            label="Category"
-            v-model="editedProduct.category"
-            :items="['Electronics', 'Clothing', 'Books', 'Other']"
-          ></v-select>
+          <v-text-field label="Price" v-model="editedProduct.price" type="number"></v-text-field>
+          <v-text-field label="Quantity" v-model="editedProduct.quantity" type="number"></v-text-field>
         </v-card-text>
         <v-card-actions>
           <v-spacer></v-spacer>
-          <v-btn color="primary" @click="saveProduct">Save</v-btn>
+          <v-btn color="primary" @click="editProduct">Save</v-btn>
           <v-btn color="grey" @click="editDialog = false">Cancel</v-btn>
         </v-card-actions>
       </v-card>
     </v-dialog>
 
     <!-- Dialog for Delete Confirmation -->
-    <v-dialog
-      v-model="deleteDialog"
-      max-width="400"
-      transition="dialog-transition"
-    >
+    <v-dialog v-model="deleteDialog" max-width="400">
       <v-card>
         <v-card-title class="headline">Confirm Deletion</v-card-title>
         <v-card-text>
@@ -105,7 +86,7 @@
         </v-card-text>
         <v-card-actions>
           <v-spacer></v-spacer>
-          <v-btn color="primary" text @click="deleteProductConfirmed">Yes</v-btn>
+          <v-btn color="primary" text @click="deleteProduct">Yes</v-btn>
           <v-btn color="grey" text @click="deleteDialog = false">No</v-btn>
         </v-card-actions>
       </v-card>
@@ -114,42 +95,40 @@
 </template>
 
 <script>
-import { getProducts, deleteProduct, addProduct as addProductService, editProduct as editProductService } from '@/services/productService';
+import { getProducts, addProduct as addProductService, editProduct as editProductService, deleteProduct as deleteProductService } from '@/services/productService';
 
 export default {
-  name: 'ProductDashboard',
+  name: 'UserDashboard',
   data() {
     return {
+      user: { firstName: '' },
       products: [],
+      newProduct: {
+        name: '',
+        description: '',
+        price: '',
+        quantity: ''
+      },
+      editedProduct: {
+        _id: null,
+        name: '',
+        description: '',
+        price: '',
+        quantity: ''
+      },
+      search: '',
+      loading: false,
+      addDialog: false,
+      editDialog: false,
+      deleteDialog: false,
+      selectedProduct: {},
       headers: [
         { text: 'Name', value: 'name' },
         { text: 'Description', value: 'description' },
         { text: 'Price', value: 'price' },
         { text: 'Quantity', value: 'quantity' },
-        { text: 'Category', value: 'category' },
         { text: 'Actions', value: 'actions', sortable: false }
-      ],
-      search: '',
-      loading: false,
-      deleteDialog: false,
-      addDialog: false,
-      editDialog: false,
-      productToDelete: null,
-      newProduct: {
-        name: '',
-        description: '',
-        price: 0,
-        quantity: 0,
-        category: '',
-      },
-      editedProduct: {
-        name: '',
-        description: '',
-        price: 0,
-        quantity: 0,
-        category: '',
-        id: null,
-      }
+      ]
     };
   },
   computed: {
@@ -172,14 +151,14 @@ export default {
     }
   },
   methods: {
+    logout() {
+      // Logique de déconnexion ici
+      console.log('User logged out');
+      // Redirection ou nettoyage des données d'authentification
+      this.$router.push('/login'); // Redirection vers la page de connexion par exemple
+    },
     openAddDialog() {
-      this.newProduct = {
-        name: '',
-        description: '',
-        price: 0,
-        quantity: 0,
-        category: '',
-      };
+      this.newProduct = { name: '', description: '', price: '', quantity: '' };
       this.addDialog = true;
     },
     async addProduct() {
@@ -187,20 +166,32 @@ export default {
         const response = await addProductService(this.newProduct);
         this.products.push(response.data);
         this.addDialog = false;
+        this.newProduct = { name: '', description: '', price: '', quantity: '' };
         alert('Product added successfully');
       } catch (error) {
         console.error('There was an error adding the product!', error);
         alert('Failed to add product');
       }
     },
-    editProduct(product) {
+    openEditDialog(product) {
       this.editedProduct = { ...product };
+      console.log('Editing product:', this.editedProduct); // Vérifie que l'ID est présent
+      console.log('Editing product with ID:', this.editedProduct._id); // Assure-toi que l'ID est bien là
       this.editDialog = true;
     },
-    async saveProduct() {
+    async editProduct() {
       try {
-        await editProductService(this.editedProduct.id, this.editedProduct);
-        this.products = this.products.map(p => (p.id === this.editedProduct.id ? this.editedProduct : p));
+        if (!this.editedProduct._id) {
+          throw new Error('Product ID is missing');
+        }
+        const updatedData = {
+          name: this.editedProduct.name,
+          description: this.editedProduct.description,
+          price: this.editedProduct.price,
+          quantity: this.editedProduct.quantity
+        };
+        await editProductService(this.editedProduct._id, updatedData);
+        this.products = this.products.map(p => (p._id === this.editedProduct._id ? { ...p, ...updatedData } : p));
         this.editDialog = false;
         alert('Product updated successfully');
       } catch (error) {
@@ -209,13 +200,18 @@ export default {
       }
     },
     confirmDeleteProduct(product) {
-      this.productToDelete = product;
+      this.selectedProduct = product;
+      console.log('Selected product for deletion:', this.selectedProduct); // Vérifie que l'ID est présent
+      console.log('Selected product ID:', this.selectedProduct._id); // Assure-toi que l'ID est bien là
       this.deleteDialog = true;
     },
-    async deleteProductConfirmed() {
+    async deleteProduct() {
       try {
-        await deleteProduct(this.productToDelete.id);
-        this.products = this.products.filter(product => product.id !== this.productToDelete.id);
+        if (!this.selectedProduct._id) {
+          throw new Error('Product ID is missing');
+        }
+        await deleteProductService(this.selectedProduct._id);
+        this.products = this.products.filter(product => product._id !== this.selectedProduct._id);
         this.deleteDialog = false;
         alert('Product deleted successfully');
       } catch (error) {
@@ -238,16 +234,7 @@ export default {
   border-radius: 8px;
 }
 .v-data-table .v-data-table__header {
-  background-color: #1976D2;
-  color: white;
-}
-.v-data-table .v-data-table__body tr:nth-of-type(odd) {
-  background-color: #f5f5f5;
-}
-.v-data-table .v-data-table__body tr:hover {
-  background-color: #e0e0e0;
-}
-.v-btn {
-  min-width: 0;
+  background-color: #000000;
+  color: rgb(217, 7, 7);
 }
 </style>

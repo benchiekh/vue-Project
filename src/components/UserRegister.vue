@@ -100,9 +100,7 @@
     </v-main>
   </v-app>
 </template>
-
 <script>
-
 import { defineComponent } from 'vue';
 import { registerService } from '@/services/authService';
 
@@ -133,12 +131,16 @@ export default defineComponent({
           return;
         }
 
-        const response = await  registerService ( 
-           this.firstName,
-            this.lastName,
-            this.email,  
-           this.password,
-        );
+        // Créer un objet registerData avec les données du formulaire
+        const registerData = {
+          firstName: this.firstName,
+          lastName: this.lastName,
+          email: this.email,
+          password: this.password,
+        };
+
+        // Appeler le service avec l'objet registerData
+        const response = await registerService(registerData);
 
         if (response.status === 200) {
           alert('Registration successful!');
