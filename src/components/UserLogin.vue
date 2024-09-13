@@ -85,9 +85,9 @@
 </template>
 
 <script>
-
 import { defineComponent } from 'vue';
-import {loginSerive} from '@/services/authService'
+import { useAuthStore } from '@/stores/authStore'; // Importez le store
+
 export default defineComponent({
   name: 'UserLogin',
   data() {
@@ -101,52 +101,42 @@ export default defineComponent({
       },
     };
   },
-methods: {
-  async login() {
-    try {
-      // Envoyer la requête POST avec l'email et le mot de passe
-      const loginData = {
-       email :this.email, 
-     password : this.password,
-    } ;
-    
-    const response = await loginSerive(loginData);
+  setup() {
+    const authStore = useAuthStore(); // Instanciez le store
+    return { authStore };
+  },
+  methods: {
+    async login() {
+      if (!this.email || !this.password) {
+        alert('Please enter both email and password.');
+        return;
+      }
 
+      try {
+        // Utilisez le store pour gérer l'authentification
+        const { role } = await this.authStore.login(this.email, this.password);
 
-      // Afficher la réponse pour déboguer
-      console.log('Login response:', response.data);
-
-      // Vérifier si la requête a été un succès
-      if (response.status === 200) {
-        const userRole = response.data.role; 
-        console.log('User role from response:', userRole);
-
-        // Redirection en fonction du rôle de l'utilisateur
-        if (userRole === 'admin') {
+        // Redirection selon le rôle de l'utilisateur
+        if (role === 'admin') {
           this.$router.push({ name: 'Admindashboard' });
-        } else if (userRole === 'user') {
+        } else if (role === 'user') {
           this.$router.push({ name: 'Userdashboard' });
         } else {
           alert('Invalid user role');
         }
-      } else {
+      } catch (error) {
         alert('Login failed. Please try again.');
       }
-    } catch (error) {
-      // Afficher l'erreur en cas d'échec
-      console.error('There was an error!', error.response?.data || error);
-      alert('Login failed. Please try again.');
-    }
-  },
-  
-  // Méthode pour rediriger vers la page d'enregistrement
-  goToRegister() {
-    this.$router.push({ name: 'Register' });
-  },
-},
+    },
 
+    goToRegister() {
+      this.$router.push({ name: 'Register' });
+    },
+  },
 });
 </script>
+
+
 
 <style scoped>
 .v-card {

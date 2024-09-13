@@ -1,15 +1,15 @@
 <template>
   <v-container>
     <v-toolbar flat>
-      <v-toolbar-title>User Dashboard</v-toolbar-title>
+      <v-toolbar-title>Admin Dashboard</v-toolbar-title>
       <v-spacer></v-spacer>
       <v-btn @click="logout" color="red" text>Logout</v-btn>
     </v-toolbar>
-    
+
     <v-row class="mb-4">
       <v-col>
         <v-card class="pa-4" elevation="2">
-          <v-card-title class="headline text-center">Hello : {{ user.firstName }}</v-card-title>
+          <v-card-title class="headline text-center">Hello : {{ user?.firstName }}</v-card-title>
           <v-card-subtitle class="text-center">
             <v-text-field
               v-model="search"
@@ -24,7 +24,7 @@
             :items="filteredUsers"
             item-key="id"
             class="elevation-1"
-            :loading="loading"
+            :loading="adminStore.loading"
           >
             <template v-slot:[`item.actions`]="{ item }">
               <v-btn icon @click="openEditDialog(item)" class="mr-2" color="blue">
@@ -44,9 +44,9 @@
       <v-card>
         <v-card-title class="headline">Edit Profile</v-card-title>
         <v-card-text>
-          <v-text-field label="First Name" v-model="editedUser.firstName"></v-text-field>
-          <v-text-field label="Last Name" v-model="editedUser.lastName"></v-text-field>
-          <v-text-field label="Email" v-model="editedUser.email"></v-text-field>
+          <v-text-field label="First Name" v-model="adminStore.editedUser.firstName"></v-text-field>
+          <v-text-field label="Last Name" v-model="adminStore.editedUser.lastName"></v-text-field>
+          <v-text-field label="Email" v-model="adminStore.editedUser.email"></v-text-field>
         </v-card-text>
         <v-card-actions>
           <v-spacer></v-spacer>
@@ -78,97 +78,67 @@
 </template>
 
 <script>
-import { getUsers, deleteUserService, editUserService } from '@/services/authService';
+import { useAdminStore } from '@/stores/adminStore';
+import { useUserStore } from '@/stores/userStore';
 
 export default {
   name: 'AdminDashboard',
   data() {
     return {
-      user: { firstName: 'John', lastName: 'Doe', email: 'john@example.com' },
-      users: [],
+      search: '',
       headers: [
         { text: 'First Name', value: 'firstName' },
         { text: 'Last Name', value: 'lastName' },
         { text: 'Email', value: 'email' },
         { text: 'Actions', value: 'actions', sortable: false }
       ],
-      search: '',
-      loading: false,
-      deleteDialog: false,
       editDialog: false,
-      editedUser: {
-        firstName: '',
-        lastName: '',
-        email: '',
-        id: null,
-      }
+      deleteDialog: false,
     };
   },
   computed: {
+    user() {
+      return this.userStore.user;
+    },
     filteredUsers() {
-      return this.users.filter(user =>
-        user.firstName.toLowerCase().includes(this.search.toLowerCase()) ||
-        user.lastName.toLowerCase().includes(this.search.toLowerCase()) ||
-        user.email.toLowerCase().includes(this.search.toLowerCase())
-      );
+      return this.adminStore.filteredUsers(this.search);
     }
   },
   async created() {
-    this.loading = true;
-    try {
-      const response = await getUsers();
-      this.users = response.data;
-    } catch (error) {
-      console.error('There was an error fetching users!', error);
-    } finally {
-      this.loading = false;
-    }
+    await this.userStore.fetchUser(); // Fetch authenticated user
+    await this.adminStore.fetchUsers(); // Fetch all users
   },
   methods: {
-    logout() {
-      // Logique de déconnexion ici
-      console.log('User logged out');
-      // Redirection ou nettoyage des données d'authentification
-      this.$router.push('/login'); // Redirection vers la page de connexion par exemple
-    },
-    openEditDialog(user) {
-      this.editedUser = { ...user, id: user._id }; 
-      this.editDialog = true;
-    },
     async editUser() {
-      try {
-        const updatedData = {
-          firstName: this.editedUser.firstName,
-          lastName: this.editedUser.lastName,
-          email: this.editedUser.email,
-        };
-        await editUserService(this.editedUser.id, updatedData);
-        this.users = this.users.map(u => (u._id === this.editedUser.id ? { ...u, ...updatedData } : u));
-        this.editDialog = false;
-        alert('Profile updated successfully');
-      } catch (error) {
-        console.error('There was an error updating the profile!', error);
-        alert('Failed to update profile');
-      }
+      await this.adminStore.updateUser();
+      this.editDialog = false;
     },
     confirmDeleteUser(user) {
-      this.userToDelete = user;
+      this.adminStore.setUserToDelete(user);
       this.deleteDialog = true;
     },
     async deleteUser() {
-      try {
-        await deleteUserService(this.userToDelete._id);
-        this.users = this.users.filter(user => user._id !== this.userToDelete._id);
-        this.deleteDialog = false;
-        alert('User deleted successfully');
-      } catch (error) {
-        console.error('There was an error deleting the user!', error);
-        alert('Failed to delete user');
-      }
+      await this.adminStore.deleteUser();
+      this.deleteDialog = false;
+    },
+    logout() {
+      console.log('User logged out');
+      this.$router.push('/login');
+    },
+    openEditDialog(user) {
+      this.adminStore.setEditedUser(user);
+      this.editDialog = true;
     }
+  },
+  setup() {
+    const adminStore = useAdminStore();
+    const userStore = useUserStore();
+
+    return { adminStore, userStore };
   }
 };
 </script>
+
 
 <style scoped>
 .v-card {
@@ -193,4 +163,4 @@ export default {
 .v-btn {
   min-width: 0;
 }
-</style>    
+</style>

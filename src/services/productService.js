@@ -1,9 +1,13 @@
 import axios from 'axios';
+import { getAuthToken } from '@/utils/authUtils';
 
 const API_URL = 'http://localhost:5000/api/auth'; 
 
 export const getProducts = () => {
-  return axios.get(`${API_URL}/products`);
+  const token = getAuthToken();
+  return axios.get(`${API_URL}/products`, {
+    headers: { 'Authorization': `Bearer ${token}` }
+  });
 };
 
 export const addProduct = (productData) => {

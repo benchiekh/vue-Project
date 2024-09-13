@@ -1,38 +1,41 @@
 import axios from 'axios';
 
 const API_URL = 'http://localhost:5000/api/auth';
+const getAuthToken = () => localStorage.getItem('token');
 
 export const registerService = (registerData) => {
   return axios.post(API_URL + '/register', registerData);
 };
 
-export const loginSerive = (loginData) => {
+export const loginService = (loginData) => {  // Nom corrigé
   return axios.post(API_URL + '/login', loginData);
 };
 
-// export const getUser = () => {
-//   return JSON.parse(localStorage.getItem('user'));
-// };
-
 export const logout = () => {
-  localStorage.removeItem('user');
+  localStorage.removeItem('token'); // Suppression du token
 };
 
 export const getUsers = () => {
-  return axios.get(API_URL + '/users');
+  return axios.get(API_URL + '/users', {
+    headers: { Authorization: `Bearer ${getAuthToken()}` }
+  });
 };
 
-// Nouvelle fonction pour supprimer un utilisateur
-
 export const deleteUserService = async (id) => {
-    return axios.delete(`${API_URL}/users/${id}`);
-  };
+  return axios.delete(`${API_URL}/users/${id}`, {
+    headers: { Authorization: `Bearer ${getAuthToken()}` }
+  });
+};
 
+export const editUserService = async (id, updatedData) => {
+  return axios.put(`${API_URL}/users/${id}`, updatedData, {
+    headers: { Authorization: `Bearer ${getAuthToken()}` }
+  });
+};
 
-  // edit user 
-
-  export const editUserService = async (id, updatedData) => {
-    return axios.put(`${API_URL}/users/${id}`, updatedData);
-  };
-
-
+export const fetchAuthenticatedUser = async () => {
+  const token = getAuthToken();
+  return axios.get(API_URL + '/user', {
+    headers: { 'Authorization': `Bearer ${token}` } // Assurez-vous que le token est correctement passé
+  });
+};

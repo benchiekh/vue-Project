@@ -10,7 +10,7 @@
     <v-row class="mb-4">
       <v-col>
         <v-card class="pa-4" elevation="2">
-          <v-card-title class="headline text-center">Welcome : {{ user.firstName }}</v-card-title>
+          <v-card-title class="headline text-center">welcome : {{ user?.firstName }}</v-card-title>
           <v-card-subtitle class="text-center">
             <v-text-field
               v-model="search"
@@ -95,12 +95,13 @@
 </template>
 <script>
 import { useProductStore } from '@/stores/productStore';
+import { removeAuthToken } from '@/utils/authUtils';
+
 
 export default {
   name: 'UserDashboard',
   data() {
     return {
-      user: { firstName: '' },
       search: '',
       addDialog: false,
       editDialog: false,
@@ -152,9 +153,9 @@ export default {
       this.deleteDialog = false;
     },
     logout() {
-        console.log('User logged out');
-      this.$router.push('/login'); 
-    }
+  removeAuthToken();
+  this.$router.push('/login');
+}
   },
   setup() {
     const productStore = useProductStore();

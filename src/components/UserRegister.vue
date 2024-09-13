@@ -102,7 +102,7 @@
 </template>
 <script>
 import { defineComponent } from 'vue';
-import { registerService } from '@/services/authService';
+import { useRegisterStore } from '@/stores/registerStore'; // Importer le store
 
 export default defineComponent({
   name: 'UserRegister',
@@ -119,6 +119,10 @@ export default defineComponent({
         minLength: value => value.length >= 6 || 'Password must be at least 6 characters long.',
       },
     };
+  },
+  setup() {
+    const registerStore = useRegisterStore(); // Instancier le store
+    return { registerStore };
   },
   methods: {
     validateConfirmPassword(value) {
@@ -139,15 +143,12 @@ export default defineComponent({
           password: this.password,
         };
 
-        // Appeler le service avec l'objet registerData
-        const response = await registerService(registerData);
+        // Utiliser le store pour appeler l'action d'inscription
+        await this.registerStore.registerUser(registerData);
 
-        if (response.status === 200) {
-          alert('Registration successful!');
-          this.$router.push({ name: 'Login' });
-        }
+        alert('Registration successful!');
+        this.$router.push({ name: 'Login' });
       } catch (error) {
-        console.error('There was an error!', error.response?.data || error);
         alert('Registration failed. Please try again.');
       }
     },
@@ -157,6 +158,7 @@ export default defineComponent({
   },
 });
 </script>
+
 
 <style scoped>
 .social-buttons {
