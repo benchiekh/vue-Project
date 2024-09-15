@@ -1,55 +1,79 @@
 <template>
   <v-container>
+    <!-- Barre d'outils avec titre, bouton de profil et bouton de déconnexion -->
     <v-toolbar flat>
       <v-toolbar-title>Admin Dashboard</v-toolbar-title>
       <v-spacer></v-spacer>
-       <!-- Icône de profil qui redirige vers la page de profil -->
-       <v-btn icon @click="goToUserProfile" color="primary">
+      
+      <!-- Bouton pour accéder au profil de l'utilisateur -->
+      <v-btn icon @click="goToUserProfile" color="primary">
         <v-icon>mdi-account</v-icon>
         <v-toolbar-title>Profile</v-toolbar-title>
       </v-btn>
       
       <v-spacer></v-spacer>
+      
+      <!-- Bouton pour se déconnecter -->
       <v-btn @click="logout" color="red" text>Logout</v-btn>
     </v-toolbar>
 
+    <!-- Tableau des utilisateurs -->
     <v-row class="mb-4">
       <v-col>
         <v-card class="pa-4" elevation="2">
-          <v-card-title class="headline text-center">Welcome: {{ updatedUser.firstName}}</v-card-title>
+          <v-card-title class="headline text-center">Welcome: {{ updatedUser.firstName }}</v-card-title>
           <v-card-subtitle class="text-center">
+            <!-- Barre de recherche pour filtrer les utilisateurs -->
             <v-text-field
               v-model="search"
               append-icon="mdi-magnify"
-              label="Search"
+              label="Search by Name"
               single-line
               hide-details
             />
           </v-card-subtitle>
-          <v-data-table
-            :headers="headers"
-            :items="filteredUsers"
-            item-key="id"
-            class="elevation-1"
-            :loading="adminStore.loading"
-          >
-            <template v-slot:[`item.actions`]="{ item }">
-              <v-btn icon @click="openEditDialog(item)" class="mr-2" color="blue">
-                <v-icon>mdi-pencil</v-icon>
-              </v-btn>
-              <v-btn icon @click="confirmDeleteUser(item)" class="red--text">
-                <v-icon>mdi-delete</v-icon>
-              </v-btn>
-            </template>
-          </v-data-table>
+
+          <!-- En-tête pour le tableau des utilisateurs -->
+          <v-card-subtitle class="text-center">
+            <v-chip class="ma-2" color="primary" text-color="white">User List</v-chip>
+          </v-card-subtitle>
+
+          <!-- Tableau affichant la liste des utilisateurs -->
+          <div class="user-table">
+            <table>
+              <thead>
+                <tr>
+                  <th>First Name</th>
+                  <th>Last Name</th>
+                  <th>Email</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr v-for="user in filteredUsers" :key="user.id">
+                  <td>{{ user.firstName }}</td>
+                  <td>{{ user.lastName }}</td>
+                  <td>{{ user.email }}</td>
+                  <td>
+                    <v-btn icon @click="openEditDialog(user)" class="mr-2" color="blue">
+                      <v-icon>mdi-pencil</v-icon>
+                    </v-btn>
+                    <v-btn icon @click="confirmDeleteUser(user)" class="red--text">
+                      <v-icon>mdi-delete</v-icon>
+                    </v-btn>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
         </v-card>
       </v-col>
     </v-row>
 
-    <!-- Dialog for Edit User -->
+    <!-- Dialogue pour la modification d'un utilisateur -->
     <v-dialog v-model="editDialog" max-width="500px">
       <v-card>
-        <v-card-title class="headline">Edit Profile</v-card-title>
+        <v-card-title class="headline">Edit User</v-card-title>
         <v-card-text>
           <v-text-field label="First Name" v-model="adminStore.editedUser.firstName"></v-text-field>
           <v-text-field label="Last Name" v-model="adminStore.editedUser.lastName"></v-text-field>
@@ -63,12 +87,8 @@
       </v-card>
     </v-dialog>
 
-    <!-- Dialog for Delete Confirmation -->
-    <v-dialog
-      v-model="deleteDialog"
-      max-width="400"
-      transition="dialog-transition"
-    >
+    <!-- Dialogue pour confirmer la suppression d'un utilisateur -->
+    <v-dialog v-model="deleteDialog" max-width="400px">
       <v-card>
         <v-card-title class="headline">Confirm Deletion</v-card-title>
         <v-card-text>
@@ -93,21 +113,14 @@ export default {
   name: 'AdminDashboard',
   data() {
     return {
-      
       search: '',
-      headers: [
-        { text: 'First Name', value: 'firstName' },
-        { text: 'Last Name', value: 'lastName' },
-        { text: 'Email', value: 'email' },
-        { text: 'Actions', value: 'actions', sortable: false }
-      ],
-      updatedUser: {
-                firstName: '',
-                lastName: '',
-                email: ''
-            },
       editDialog: false,
       deleteDialog: false,
+      updatedUser: {
+        firstName: '',
+        lastName: '',
+        email: ''
+      }
     };
   },
   computed: {
@@ -119,25 +132,20 @@ export default {
     }
   },
   async created() {
-    await this.userStore.fetchUser(); // Fetch authenticated user
-    await this.adminStore.fetchUsers(); // Fetch all users
+    await this.userStore.fetchUser();
+    await this.adminStore.fetchUsers();
     const authStore = useAuthStore();
-
-try {
-    if (!authStore.user) {
-        // Si l'utilisateur n'est pas déjà chargé, récupérer les informations utilisateur
+    
+    try {
+      if (!authStore.user) {
         await authStore.fetchAuthenticatedUser();
+      }
+      this.updatedUser.firstName = authStore.user?.firstName || '';
+      this.updatedUser.lastName = authStore.user?.lastName || '';
+      this.updatedUser.email = authStore.user?.email || '';
+    } catch (error) {
+      console.error('Erreur lors du chargement des informations utilisateur', error);
     }
-    console.log('Utilisateur récupéré :', authStore.user);
-
-    // Initialiser les données avec les informations de l'utilisateur connecté
-    this.updatedUser.firstName = authStore.user?.firstName || '';
-    this.updatedUser.lastName = authStore.user?.lastName || '';
-    this.updatedUser.email = authStore.user?.email || '';
-} catch (error) {
-    console.error('Erreur lors du chargement des informations utilisateur', error);
-}
-  
   },
   methods: {
     async editUser() {
@@ -153,7 +161,7 @@ try {
       this.deleteDialog = false;
     },
     goToUserProfile() {
-      this.$router.push('/profile'); // Assurez-vous que la route '/userprofile' est bien définie dans le router
+      this.$router.push('/profile');
     },
     logout() {
       console.log('User logged out');
@@ -167,32 +175,36 @@ try {
   setup() {
     const adminStore = useAdminStore();
     const userStore = useUserStore();
-
     return { adminStore, userStore };
   }
 };
 </script>
 
-
 <style scoped>
 .v-card {
   border-radius: 12px;
 }
-.v-data-table th, .v-data-table td {
-  font-size: 16px;
+.user-table {
+  overflow-x: auto;
 }
-.v-data-table .v-data-table__wrapper {
-  border-radius: 8px;
+.user-table table {
+  width: 100%;
+  border-collapse: collapse;
 }
-.v-data-table .v-data-table__header {
-  background-color: #1976D2;
-  color: white;
+.user-table th, .user-table td {
+  border: 1px solid #ddd;
+  padding: 8px;
+  text-align: left;
 }
-.v-data-table .v-data-table__body tr:nth-of-type(odd) {
-  background-color: #f5f5f5;
+.user-table th {
+  background-color: #f4f4f4;
+  font-weight: bold;
 }
-.v-data-table .v-data-table__body tr:hover {
-  background-color: #e0e0e0;
+.user-table tr:nth-child(even) {
+  background-color: #f9f9f9;
+}
+.user-table tr:hover {
+  background-color: #f1f1f1;
 }
 .v-btn {
   min-width: 0;
