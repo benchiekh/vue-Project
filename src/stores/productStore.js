@@ -1,4 +1,4 @@
-import { defineStore } from 'pinia';
+ import { defineStore } from 'pinia';
 import { getProducts, addProduct as addProductService, editProduct as editProductService, deleteProduct as deleteProductService } from '@/services/productService';
 
 export const useProductStore = defineStore('productStore', {

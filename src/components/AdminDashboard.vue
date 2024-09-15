@@ -3,13 +3,20 @@
     <v-toolbar flat>
       <v-toolbar-title>Admin Dashboard</v-toolbar-title>
       <v-spacer></v-spacer>
+       <!-- Icône de profil qui redirige vers la page de profil -->
+       <v-btn icon @click="goToUserProfile" color="primary">
+        <v-icon>mdi-account</v-icon>
+        <v-toolbar-title>Profile</v-toolbar-title>
+      </v-btn>
+      
+      <v-spacer></v-spacer>
       <v-btn @click="logout" color="red" text>Logout</v-btn>
     </v-toolbar>
 
     <v-row class="mb-4">
       <v-col>
         <v-card class="pa-4" elevation="2">
-          <v-card-title class="headline text-center">Hello : {{ user?.firstName }}</v-card-title>
+          <v-card-title class="headline text-center">Welcome: {{ updatedUser.firstName}}</v-card-title>
           <v-card-subtitle class="text-center">
             <v-text-field
               v-model="search"
@@ -80,11 +87,13 @@
 <script>
 import { useAdminStore } from '@/stores/adminStore';
 import { useUserStore } from '@/stores/userStore';
+import { useAuthStore } from '@/stores/authStore';
 
 export default {
   name: 'AdminDashboard',
   data() {
     return {
+      
       search: '',
       headers: [
         { text: 'First Name', value: 'firstName' },
@@ -92,6 +101,11 @@ export default {
         { text: 'Email', value: 'email' },
         { text: 'Actions', value: 'actions', sortable: false }
       ],
+      updatedUser: {
+                firstName: '',
+                lastName: '',
+                email: ''
+            },
       editDialog: false,
       deleteDialog: false,
     };
@@ -107,6 +121,23 @@ export default {
   async created() {
     await this.userStore.fetchUser(); // Fetch authenticated user
     await this.adminStore.fetchUsers(); // Fetch all users
+    const authStore = useAuthStore();
+
+try {
+    if (!authStore.user) {
+        // Si l'utilisateur n'est pas déjà chargé, récupérer les informations utilisateur
+        await authStore.fetchAuthenticatedUser();
+    }
+    console.log('Utilisateur récupéré :', authStore.user);
+
+    // Initialiser les données avec les informations de l'utilisateur connecté
+    this.updatedUser.firstName = authStore.user?.firstName || '';
+    this.updatedUser.lastName = authStore.user?.lastName || '';
+    this.updatedUser.email = authStore.user?.email || '';
+} catch (error) {
+    console.error('Erreur lors du chargement des informations utilisateur', error);
+}
+  
   },
   methods: {
     async editUser() {
@@ -120,6 +151,9 @@ export default {
     async deleteUser() {
       await this.adminStore.deleteUser();
       this.deleteDialog = false;
+    },
+    goToUserProfile() {
+      this.$router.push('/profile'); // Assurez-vous que la route '/userprofile' est bien définie dans le router
     },
     logout() {
       console.log('User logged out');

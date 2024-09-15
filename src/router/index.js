@@ -5,6 +5,7 @@ import UserLogin from '../components/UserLogin.vue';
 import UserDashboard from '../components/UserDashboard';
 import AdminDashboard from '../components/AdminDashboard';
 import LandingPage from '../components/LandingPage';
+import UserProfile from '../components/UserProfile.vue'; // Importer le composant UserProfile
 
 const routes = [
     {
@@ -35,6 +36,10 @@ const routes = [
             path: '/admindashboard',
             name: 'Admindashboard',
             component: AdminDashboard,
+          },{
+            path: '/profile',  // Nouvelle route pour le profil
+            name: 'UserProfile',
+            component: UserProfile,
           },
           {
             path: '',

@@ -1,16 +1,25 @@
 <template>
   <v-container>
-    <!-- Toolbar with Logout Button -->
+    <!-- Barre d'outils avec bouton de déconnexion et icône de profil -->
     <v-toolbar flat>
       <v-toolbar-title>User Dashboard</v-toolbar-title>
+      <v-spacer></v-spacer>
+      
+      <!-- Icône de profil qui redirige vers la page de profil -->
+      <v-btn icon @click="goToUserProfile" color="primary">
+        <v-icon>mdi-account</v-icon>
+        <v-toolbar-title>Profile</v-toolbar-title>
+      </v-btn>
+      
       <v-spacer></v-spacer>
       <v-btn @click="logout" color="red" text>Logout</v-btn>
     </v-toolbar>
 
+    <!-- Contenu du tableau de bord des produits -->
     <v-row class="mb-4">
       <v-col>
         <v-card class="pa-4" elevation="2">
-          <v-card-title class="headline text-center">welcome : {{ user?.firstName }}</v-card-title>
+          <v-card-title class="headline text-center">Welcome: {{ updatedUser.firstName}}</v-card-title>
           <v-card-subtitle class="text-center">
             <v-text-field
               v-model="search"
@@ -40,8 +49,8 @@
         </v-card>
       </v-col>
     </v-row>
-    
-    <!-- Dialog for Add Product -->
+
+    <!-- Dialogue pour l'ajout de produit -->
     <v-dialog v-model="addDialog" max-width="500px">
       <v-card>
         <v-card-title class="headline">Add Product</v-card-title>
@@ -59,7 +68,7 @@
       </v-card>
     </v-dialog>
 
-    <!-- Dialog for Edit Product -->
+    <!-- Dialogue pour l'édition de produit -->
     <v-dialog v-model="editDialog" max-width="500px">
       <v-card>
         <v-card-title class="headline">Edit Product</v-card-title>
@@ -77,8 +86,8 @@
       </v-card>
     </v-dialog>
 
-    <!-- Dialog for Delete Confirmation -->
-    <v-dialog v-model="deleteDialog" max-width="400">
+    <!-- Dialogue pour la confirmation de suppression -->
+    <v-dialog v-model="deleteDialog" max-width="400px">
       <v-card>
         <v-card-title class="headline">Confirm Deletion</v-card-title>
         <v-card-text>
@@ -96,7 +105,7 @@
 <script>
 import { useProductStore } from '@/stores/productStore';
 import { removeAuthToken } from '@/utils/authUtils';
-
+import { useAuthStore } from '@/stores/authStore';
 
 export default {
   name: 'UserDashboard',
@@ -106,13 +115,26 @@ export default {
       addDialog: false,
       editDialog: false,
       deleteDialog: false,
+      newProduct: {
+        name: '',
+        description: '',
+        price: '',
+        quantity: ''
+      }, updatedUser: {
+                firstName: '',
+                lastName: '',
+                email: ''
+            },
+      editedProduct: {},
+      selectedProduct: null,
       headers: [
         { text: 'Name', value: 'name' },
         { text: 'Description', value: 'description' },
         { text: 'Price', value: 'price' },
         { text: 'Quantity', value: 'quantity' },
         { text: 'Actions', value: 'actions', sortable: false }
-      ]
+      ],
+      user: {}
     };
   },
   computed: {
@@ -124,7 +146,24 @@ export default {
     }
   },
   async created() {
+    this.user = JSON.parse(this.$route.query.user || '{}');
     await this.productStore.fetchProducts();
+    const authStore = useAuthStore();
+
+try {
+    if (!authStore.user) {
+        // Si l'utilisateur n'est pas déjà chargé, récupérer les informations utilisateur
+        await authStore.fetchAuthenticatedUser();
+    }
+    console.log('Utilisateur récupéré :', authStore.user);
+
+    // Initialiser les données avec les informations de l'utilisateur connecté
+    this.updatedUser.firstName = authStore.user?.firstName || '';
+    this.updatedUser.lastName = authStore.user?.lastName || '';
+    this.updatedUser.email = authStore.user?.email || '';
+} catch (error) {
+    console.error('Erreur lors du chargement des informations utilisateur', error);
+}
   },
   methods: {
     openAddDialog() {
@@ -153,9 +192,13 @@ export default {
       this.deleteDialog = false;
     },
     logout() {
-  removeAuthToken();
-  this.$router.push('/login');
-}
+      removeAuthToken();
+      this.$router.push('/login');
+    },
+    // Nouvelle méthode pour rediriger vers la page de profil
+    goToUserProfile() {
+      this.$router.push('/profile'); // Assurez-vous que la route '/userprofile' est bien définie dans le router
+    }
   },
   setup() {
     const productStore = useProductStore();

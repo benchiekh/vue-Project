@@ -86,7 +86,7 @@
 
 <script>
 import { defineComponent } from 'vue';
-import { useAuthStore } from '@/stores/authStore'; // Importez le store
+import { loginService } from '@/services/authService';
 
 export default defineComponent({
   name: 'UserLogin',
@@ -101,10 +101,6 @@ export default defineComponent({
       },
     };
   },
-  setup() {
-    const authStore = useAuthStore(); // Instanciez le store
-    return { authStore };
-  },
   methods: {
     async login() {
       if (!this.email || !this.password) {
@@ -113,22 +109,37 @@ export default defineComponent({
       }
 
       try {
-        // Utilisez le store pour gérer l'authentification
-        const { role } = await this.authStore.login(this.email, this.password);
+        const loginData = {
+          email: this.email,
+          password: this.password,
+        };
 
-        // Redirection selon le rôle de l'utilisateur
-        if (role === 'admin') {
-          this.$router.push({ name: 'Admindashboard' });
-        } else if (role === 'user') {
-          this.$router.push({ name: 'Userdashboard' });
+        const response = await loginService(loginData);
+
+        if (response.status === 200) {
+          const userRole = response.data.role;
+          const token = response.data.token;
+
+          localStorage.setItem('token', token);
+
+          // Émettre les informations de l'utilisateur
+          this.$emit('login-success', { email: this.email, role: userRole });
+
+          if (userRole === 'admin') {
+            this.$router.push({ name: 'Admindashboard' });
+          } else if (userRole === 'user') {
+            this.$router.push({ name: 'Userdashboard' });
+          } else {
+            alert('Invalid user role');
+          }
         } else {
-          alert('Invalid user role');
+          alert('Login failed. Please try again.');
         }
       } catch (error) {
+        console.error('There was an error!', error.response?.data || error);
         alert('Login failed. Please try again.');
       }
     },
-
     goToRegister() {
       this.$router.push({ name: 'Register' });
     },

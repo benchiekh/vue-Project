@@ -33,9 +33,17 @@ export const editUserService = async (id, updatedData) => {
   });
 };
 
+ 
 export const fetchAuthenticatedUser = async () => {
   const token = getAuthToken();
-  return axios.get(API_URL + '/user', {
-    headers: { 'Authorization': `Bearer ${token}` } // Assurez-vous que le token est correctement passé
+  return axios.get(`${API_URL}/user`, {
+    headers: { 'Authorization': `Bearer ${token}` }
+  });
+};
+
+export const updateUserService = async (updatedData) => {
+  const token = getAuthToken();
+  return axios.put(API_URL + '/user', updatedData, {
+    headers: { 'Authorization': `Bearer ${token}` }
   });
 };
