@@ -6,6 +6,7 @@ import UserDashboard from '../components/UserDashboard';
 import AdminDashboard from '../components/AdminDashboard';
 import LandingPage from '../components/LandingPage';
 import UserProfile from '../components/UserProfile.vue'; // Importer le composant UserProfile
+import ProductSat from '@/components/ProductSat.vue';
 
 const routes = [
     {
@@ -31,6 +32,11 @@ const routes = [
             path: '/userdashboard',
             name: 'Userdashboard',
             component: UserDashboard,
+          },
+           {
+            path: '/productstat',
+            name: 'ProductStat',
+            component: ProductSat,
           },
           {
             path: '/admindashboard',

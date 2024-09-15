@@ -1,3 +1,4 @@
+// src/services/authService.js
 import axios from 'axios';
 
 const API_URL = 'http://localhost:5000/api/auth';
@@ -7,7 +8,7 @@ export const registerService = (registerData) => {
   return axios.post(API_URL + '/register', registerData);
 };
 
-export const loginService = (loginData) => {  // Nom corrigé
+export const loginService = (loginData) => {
   return axios.post(API_URL + '/login', loginData);
 };
 
@@ -21,29 +22,34 @@ export const getUsers = () => {
   });
 };
 
-export const deleteUserService = async (id) => {
+export const deleteUserService = (id) => {
   return axios.delete(`${API_URL}/users/${id}`, {
     headers: { Authorization: `Bearer ${getAuthToken()}` }
   });
 };
 
-export const editUserService = async (id, updatedData) => {
+export const editUserService = (id, updatedData) => {
   return axios.put(`${API_URL}/users/${id}`, updatedData, {
     headers: { Authorization: `Bearer ${getAuthToken()}` }
   });
 };
 
- 
-export const fetchAuthenticatedUser = async () => {
+export const fetchAuthenticatedUser = () => {
   const token = getAuthToken();
   return axios.get(`${API_URL}/user`, {
     headers: { 'Authorization': `Bearer ${token}` }
   });
 };
 
-export const updateUserService = async (updatedData) => {
+export const updateUserService = (updatedData) => {
   const token = getAuthToken();
   return axios.put(API_URL + '/user', updatedData, {
     headers: { 'Authorization': `Bearer ${token}` }
+  });
+};
+
+export const fetchProductStats = () => {
+  return axios.get(`${API_URL}/products/stats`, {
+    headers: { Authorization: `Bearer ${getAuthToken()}` }
   });
 };

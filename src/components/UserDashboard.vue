@@ -10,6 +10,13 @@
         <v-icon>mdi-account</v-icon>
         <v-toolbar-title>Profile</v-toolbar-title>
       </v-btn>
+      <v-spacer></v-spacer>
+      
+      <!-- Icône de profil qui redirige vers la page de profil -->
+      <v-btn icon @click="goToproductstat" color="primary">
+        
+        <v-toolbar-title>Statistiques</v-toolbar-title>
+      </v-btn>
       
       <v-spacer></v-spacer>
       <!-- Bouton de déconnexion qui déclenche la méthode logout -->
@@ -230,6 +237,10 @@ export default {
     // Rediriger vers la page de profil de l'utilisateur
     goToUserProfile() {
       this.$router.push('/profile');
+    },
+
+    goToproductstat() {
+      this.$router.push('/productstat');
     }
   },
   setup() {
